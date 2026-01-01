@@ -1,7 +1,7 @@
 import { TimelineItem, InsightItem, PlanItem } from './types';
 
-// 预留的图片占位符或示例图片，实际使用时替换为真实URL
-const PLACEHOLDER_IMAGES = Array(6).fill("");
+// 初始化6个空位，等待用户上传
+const PLACEHOLDER_PHOTOS = Array(6).fill("");
 
 export const TIMELINE_DATA: TimelineItem[] = [
   {
@@ -14,7 +14,7 @@ export const TIMELINE_DATA: TimelineItem[] = [
       "完成从理论到实操的第一次闭环"
     ],
     tags: ["入职适应", "执行力", "基础运营"],
-    photos: PLACEHOLDER_IMAGES
+    photos: PLACEHOLDER_PHOTOS
   },
   {
     month: "07 / 2025",
@@ -26,7 +26,7 @@ export const TIMELINE_DATA: TimelineItem[] = [
       "建立初期学员档案与反馈机制"
     ],
     tags: ["教学起步", "墨西哥市场", "课程体系"],
-    photos: PLACEHOLDER_IMAGES
+    photos: PLACEHOLDER_PHOTOS
   },
   {
     month: "08 / 2025",
@@ -38,7 +38,7 @@ export const TIMELINE_DATA: TimelineItem[] = [
       "参与线下课协助，学习高客单交付技巧"
     ],
     tags: ["SOP优化", "进阶教学", "营销思维"],
-    photos: PLACEHOLDER_IMAGES
+    photos: PLACEHOLDER_PHOTOS
   },
   {
     month: "09 / 2025",
@@ -50,7 +50,7 @@ export const TIMELINE_DATA: TimelineItem[] = [
       "共情学员痛点，实现销转0到1的突破"
     ],
     tags: ["销售转化", "私域运营", "个人品牌"],
-    photos: PLACEHOLDER_IMAGES
+    photos: PLACEHOLDER_PHOTOS
   },
   {
     month: "10 / 2025",
@@ -62,7 +62,7 @@ export const TIMELINE_DATA: TimelineItem[] = [
       "探索'技术+内容'的新型生产力边界"
     ],
     tags: ["线下活动", "AI探索", "技术调研"],
-    photos: PLACEHOLDER_IMAGES
+    photos: PLACEHOLDER_PHOTOS
   },
   {
     month: "11 / 2025",
@@ -75,7 +75,7 @@ export const TIMELINE_DATA: TimelineItem[] = [
     ],
     tags: ["业绩巅峰", "销售精通", "高产出", "爆款内容"],
     highlight: true,
-    photos: PLACEHOLDER_IMAGES
+    photos: PLACEHOLDER_PHOTOS
   },
   {
     month: "12 / 2025",
@@ -87,7 +87,7 @@ export const TIMELINE_DATA: TimelineItem[] = [
       "启动个人视频号，倒逼技术输出与IP建设"
     ],
     tags: ["深度复盘", "AI自动化", "方法论", "个人IP"],
-    photos: PLACEHOLDER_IMAGES
+    photos: PLACEHOLDER_PHOTOS
   },
 ];
 

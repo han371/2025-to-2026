@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { CheckCircle2, AlertTriangle, Zap, Target, Award, Brain, Rocket, Image as ImageIcon, ChevronRight, Plus, Upload, X, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { CheckCircle2, AlertTriangle, Zap, Target, Award, Brain, Rocket, Image as ImageIcon, ChevronRight, Plus, Upload, Trash2, Lock, Unlock, Save } from 'lucide-react';
 import ParticleBackground from './components/ParticleBackground';
 import Section from './components/Section';
 import Navigation from './components/Navigation';
@@ -7,25 +7,57 @@ import { TIMELINE_DATA, INSIGHTS_DATA, GROWTH_METRICS, PLAN_2026 } from './const
 import { TimelineItem } from './types';
 
 function App() {
-  // Reusable gradient text style for section headers
   const gradientHeaderClass = "text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-white";
 
-  // State to manage timeline data for photo updates
+  // State to manage timeline data
   const [timelineItems, setTimelineItems] = useState<TimelineItem[]>(TIMELINE_DATA);
+  const [isLocked, setIsLocked] = useState(false); // Mode: Edit vs View
   
-  // Refs for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeUploadRef = useRef<{ tIdx: number; pIdx: number } | null>(null);
 
-  // Handle clicking a photo slot
+  // Load from LocalStorage on mount to restore user's photos
+  useEffect(() => {
+    const savedData = localStorage.getItem('jiacong_report_data');
+    const savedLock = localStorage.getItem('jiacong_report_locked');
+    
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        // Ensure structure matches (basic validation)
+        if (Array.isArray(parsedData)) {
+            setTimelineItems(parsedData);
+        }
+      } catch (e) {
+        console.error("Failed to load saved photos", e);
+      }
+    }
+
+    if (savedLock === 'true') {
+      setIsLocked(true);
+    }
+  }, []);
+
+  // Save to LocalStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('jiacong_report_data', JSON.stringify(timelineItems));
+  }, [timelineItems]);
+
+  // Save lock state
+  useEffect(() => {
+    localStorage.setItem('jiacong_report_locked', isLocked.toString());
+  }, [isLocked]);
+
+
   const handleSlotClick = (tIdx: number, pIdx: number) => {
+    if (isLocked) return; // Disable click in lock mode
     activeUploadRef.current = { tIdx, pIdx };
     fileInputRef.current?.click();
   };
 
-  // Handle removing a photo
   const handleRemovePhoto = (e: React.MouseEvent, tIdx: number, pIdx: number) => {
-    e.stopPropagation(); // Prevent triggering click on parent div
+    if (isLocked) return;
+    e.stopPropagation();
     setTimelineItems(prev => {
       const newItems = [...prev];
       const newPhotos = [...(newItems[tIdx].photos || [])];
@@ -35,7 +67,6 @@ function App() {
     });
   };
 
-  // Handle file selection
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !activeUploadRef.current) return;
@@ -54,9 +85,11 @@ function App() {
       });
     };
     reader.readAsDataURL(file);
-
-    // Reset input to allow selecting the same file again if needed
     event.target.value = '';
+  };
+
+  const toggleLock = () => {
+    setIsLocked(!isLocked);
   };
 
   return (
@@ -160,47 +193,65 @@ function App() {
                             </div>
                         )}
 
-                        {/* Photo Grid - Interactive */}
+                        {/* Photo Grid */}
                         <div className="mt-8 border-t border-white/5 pt-6">
-                            <div className="text-xs font-mono text-gray-500 mb-4 flex items-center gap-2 uppercase tracking-widest">
-                                <ImageIcon size={14} className="text-blue-400" />
-                                <span>年度瞬间 · Gallery (Click to Upload)</span>
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="text-xs font-mono text-gray-500 flex items-center gap-2 uppercase tracking-widest">
+                                    <ImageIcon size={14} className="text-blue-400" />
+                                    <span>年度瞬间 · Gallery {isLocked ? '(View Only)' : '(Edit Mode)'}</span>
+                                </div>
                             </div>
+                            
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 {item.photos?.map((photoUrl, pIdx) => (
                                     <div 
                                       key={pIdx} 
                                       onClick={() => handleSlotClick(index, pIdx)}
-                                      className={`group/photo relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                                      className={`group/photo relative aspect-[4/3] rounded-xl overflow-hidden transition-all duration-300 ${
+                                        !isLocked ? 'cursor-pointer' : ''
+                                      } ${
                                         photoUrl 
                                           ? 'bg-black border border-white/10' 
-                                          : 'bg-white/5 border border-dashed border-white/20 hover:border-blue-500/50 hover:bg-blue-500/10'
+                                          : `bg-white/5 border border-dashed border-white/20 ${!isLocked ? 'hover:border-blue-500/50 hover:bg-blue-500/10' : ''}`
                                       }`}
                                     >
                                         {photoUrl ? (
                                             <>
                                               <img src={photoUrl} alt={`Moment ${pIdx + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover/photo:scale-110" />
                                               
-                                              {/* Hover Overlay for Replace */}
-                                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
-                                                 <Upload size={20} className="text-blue-400" />
-                                                 <span className="text-xs font-mono">Replace</span>
-                                              </div>
+                                              {/* Overlay (Only in Edit Mode or for aesthetics) */}
+                                              {!isLocked && (
+                                                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]">
+                                                     <Upload size={20} className="text-blue-400" />
+                                                     <span className="text-xs font-mono">Replace</span>
+                                                  </div>
+                                              )}
 
-                                              {/* Remove Button */}
-                                              <button 
-                                                onClick={(e) => handleRemovePhoto(e, index, pIdx)}
-                                                className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white opacity-0 group-hover/photo:opacity-100 transition-all transform scale-90 hover:scale-100 z-10 backdrop-blur-md"
-                                              >
-                                                <Trash2 size={14} />
-                                              </button>
+                                              {/* Remove Button (Only in Edit Mode) */}
+                                              {!isLocked && (
+                                                  <button 
+                                                    onClick={(e) => handleRemovePhoto(e, index, pIdx)}
+                                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white opacity-0 group-hover/photo:opacity-100 transition-all transform scale-90 hover:scale-100 z-10 backdrop-blur-md"
+                                                  >
+                                                    <Trash2 size={14} />
+                                                  </button>
+                                              )}
+                                              
+                                              {/* View Mode Overlay */}
+                                              {isLocked && (
+                                                 <div className="absolute inset-0 bg-blue-500/0 hover:bg-blue-500/10 transition-colors pointer-events-none"></div>
+                                              )}
                                             </>
                                         ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 group-hover/photo:text-blue-400 transition-colors gap-2">
-                                                <div className="w-10 h-10 rounded-full border border-current flex items-center justify-center group-hover/photo:scale-110 transition-transform duration-300 bg-black/20">
-                                                    <Plus size={18} />
-                                                </div>
-                                                <span className="text-[10px] font-mono uppercase tracking-widest opacity-70 group-hover/photo:opacity-100">Upload</span>
+                                            <div className={`w-full h-full flex flex-col items-center justify-center text-gray-600 transition-colors gap-2 ${!isLocked ? 'group-hover/photo:text-blue-400' : 'opacity-30'}`}>
+                                                {!isLocked && (
+                                                    <>
+                                                        <div className="w-10 h-10 rounded-full border border-current flex items-center justify-center group-hover/photo:scale-110 transition-transform duration-300 bg-black/20">
+                                                            <Plus size={18} />
+                                                        </div>
+                                                        <span className="text-[10px] font-mono uppercase tracking-widest opacity-70 group-hover/photo:opacity-100">Upload</span>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -320,6 +371,17 @@ function App() {
              ))}
           </div>
         </section>
+
+        {/* LOCK TOGGLE FOOTER */}
+        <div className="fixed bottom-6 right-6 z-50">
+             <button 
+                onClick={toggleLock}
+                className={`p-4 rounded-full shadow-2xl backdrop-blur-md border border-white/10 transition-all duration-300 ${isLocked ? 'bg-black/80 text-green-400 hover:bg-black' : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105'}`}
+                title={isLocked ? "Unlock to Edit" : "Lock Changes"}
+             >
+                {isLocked ? <Lock size={20} /> : <Unlock size={20} />}
+             </button>
+        </div>
 
         {/* FOOTER */}
         <footer className="pt-20 pb-10 border-t border-white/5 mt-20">
